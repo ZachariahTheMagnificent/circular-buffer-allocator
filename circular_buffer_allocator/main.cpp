@@ -1,10 +1,15 @@
 #include <iostream>
+#include <vector>
 #include "profiler.hpp"
 #include "circular_buffer_allocator.hpp"
 
+using zachariahs_world::custom_allocators::circular_buffer_allocator_type;
+
+template<typename type>
+using array_type = std::vector<type, circular_buffer_allocator_type<type>>;
+
 int main ( )
 {
-	using zachariahs_world::custom_allocators::circular_buffer_allocator_type;
 	constexpr auto num_tests = 1000;
 
 	profiler my_profiler;
@@ -17,7 +22,12 @@ int main ( )
 	{
 		auto test = [ ]
 		{
-			auto allocator = circular_buffer_allocator_type<int> { };
+			auto array = array_type<int> { };
+
+			for ( auto i = int { }; i < 10'000; ++i )
+			{
+				array.push_back ( i );
+			}
 		};
 
 		// Warmup
