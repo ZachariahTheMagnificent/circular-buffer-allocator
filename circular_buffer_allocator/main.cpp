@@ -112,11 +112,11 @@ int main ( )
 		<< "[RESERVE_MEMORY_AHEAD_OF_TIME]"
 #endif
 		<< '\n';
-	std::cout << "Average: " << my_profile.mean << '\n';
-	std::cout << "Standard deviation: " << my_profile.standard_deviation << '\n';
-	std::cout << "Highest: " << my_profile.highest << '\n';
-	std::cout << "Lowest: " << my_profile.lowest << '\n';
-	std::cout << "Median: " << my_profile.median << '\n';
+	std::cout << "Average: " << my_profile.mean << "ns\n";
+	std::cout << "Standard deviation: " << my_profile.standard_deviation << "ns\n";
+	std::cout << "Highest: " << my_profile.highest << "ns\n";
+	std::cout << "Lowest: " << my_profile.lowest << "ns\n";
+	std::cout << "Median: " << my_profile.median << "ns\n";
 	std::system ( "pause" );
 	return 0;
 }
