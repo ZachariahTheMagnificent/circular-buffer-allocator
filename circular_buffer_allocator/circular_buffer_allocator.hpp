@@ -16,9 +16,12 @@ namespace zachariahs_world
 				allocation_metadata_type* next_allocation { };
 
 				allocation_metadata_type ( ) = default;
-				constexpr explicit allocation_metadata_type ( allocation_metadata_type*const previous_allocation ) noexcept : previous_allocation { previous_allocation }
+				explicit allocation_metadata_type ( allocation_metadata_type*const previous_allocation ) noexcept : previous_allocation { previous_allocation }
 				{
-
+					if ( previous_allocation )
+					{
+						previous_allocation->next_allocation = this;
+					}
 				}
 			};
 
