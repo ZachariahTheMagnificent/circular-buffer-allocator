@@ -219,11 +219,11 @@ namespace zachariahs_world
 
 			static type* allocate ( const std::size_t size )
 			{
-				return static_cast<type*> ( global_circular_buffer_allocator::allocate ( size, alignment ) );
+				return reinterpret_cast<type*> ( global_circular_buffer_allocator::allocate ( size, alignment ) );
 			}
 			static void deallocate ( type*const allocation_to_deallocate, const std::size_t size ) noexcept
 			{
-				global_circular_buffer_allocator::deallocate ( static_cast<char*> ( allocation_to_deallocate ), size, alignment );
+				global_circular_buffer_allocator::deallocate ( reinterpret_cast<char*> ( allocation_to_deallocate ), size, alignment );
 			}
 		};
 
