@@ -38,21 +38,6 @@ constexpr auto test16 = [ ]
 } ( );
 #endif
 
-array function ( )
-{
-	// Array1 gets added to the stack.
-	auto array1 = array { };
-	// Array2 gets added to the stack.
-	auto array2 = array { };
-
-	// Array3 gets created by combining array1 and array2 together
-	auto array3 = array1 + array2;
-
-	// Array3's lifespan gets extended beyond function ( )
-	return std::move ( array3 );
-}
-// Array1 and 2's destruction gets blocked by array3
-
 template<typename type>
 using array_type =
 #if defined USE_CUSTOM_ALLOCATOR
@@ -87,7 +72,7 @@ int main ( )
 
 		for ( auto i = std::size_t { }; i < num_frames; ++i )
 		{
-			ints = [ &ints ]
+			ints = [ &ints, num_ints ]
 			{
 				auto results = array_type<int> { };
 #if defined RESERVE_MEMORY_AHEAD_OF_TIME
