@@ -87,11 +87,11 @@ namespace zachariahs_world
 				assert ( alignment >= alignof ( std::max_align_t ) );
 				
 				const auto pointer_to_allocation_metadata = align_pointer_by_decrement ( allocation_to_deallocate - sizeof ( allocation_metadata_type ), alignment );
-				auto allocation_metadata = allocation_metadata_type { };
 
 				std::lock_guard guard { my_mutex };
 
 				// Fetch the metadata from the buffer.
+				auto allocation_metadata = allocation_metadata_type { };
 				std::memcpy ( &allocation_metadata, pointer_to_allocation_metadata, sizeof ( allocation_metadata ) );
 
 				if ( allocation_metadata.previous_allocation == nullptr )
