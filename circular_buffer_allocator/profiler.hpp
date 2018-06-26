@@ -67,7 +67,7 @@ public:
 
 		data_points_.clear ( );
 
-		return profile {
+		return profile_type {
 			static_cast<num_type>( lowest ),
 			static_cast<num_type>( highest ),
 			static_cast<num_type>( median ),
