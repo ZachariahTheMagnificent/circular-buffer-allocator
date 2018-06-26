@@ -1,8 +1,10 @@
 #include <iostream>
 #include "profiler.hpp"
+#include "circular_buffer_allocator.hpp"
 
 int main ( )
 {
+	using zachariahs_world::custom_allocators::circular_buffer_allocator_type;
 	constexpr auto num_tests = 1000;
 
 	profiler my_profiler;
@@ -15,7 +17,7 @@ int main ( )
 	{
 		auto test = [ ]
 		{
-
+			auto allocator = circular_buffer_allocator_type<int> { };
 		};
 
 		// Warmup
