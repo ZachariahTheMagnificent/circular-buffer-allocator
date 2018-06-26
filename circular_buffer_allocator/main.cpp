@@ -2,6 +2,7 @@
 #include <vector>
 #include "profiler.hpp"
 #define USE_CUSTOM_ALLOCATOR
+#define RESERVE_MEMORY_AHEAD_OF_TIME
 
 #if defined USE_CUSTOM_ALLOCATOR
 #include "circular_buffer_allocator.hpp"
@@ -37,6 +38,21 @@ constexpr auto test16 = [ ]
 } ( );
 #endif
 
+array function ( )
+{
+	// Array1 gets added to the stack.
+	auto array1 = array { };
+	// Array2 gets added to the stack.
+	auto array2 = array { };
+
+	// Array3 gets created by combining array1 and array2 together
+	auto array3 = array1 + array2;
+
+	// Array3's lifespan gets extended beyond function ( )
+	return std::move ( array3 );
+}
+// Array1 and 2's destruction gets blocked by array3
+
 template<typename type>
 using array_type =
 #if defined USE_CUSTOM_ALLOCATOR
@@ -60,6 +76,9 @@ int main ( )
 	auto test = [ num_ints, num_frames ]
 	{
 		auto ints = array_type<int> { };
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+		ints.reserve ( num_ints );
+#endif
 
 		for ( auto i = int { }; i < num_ints; ++i )
 		{
@@ -71,6 +90,9 @@ int main ( )
 			ints = [ &ints ]
 			{
 				auto results = array_type<int> { };
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+				results.reserve ( num_ints );
+#endif
 
 				for ( const auto integer : ints )
 				{
@@ -100,6 +122,9 @@ int main ( )
 #endif
 #if defined USE_CUSTOM_ALLOCATOR
 		<< "[USE_CUSTOM_ALLOCATOR]"
+#endif
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+		<< "[RESERVE_MEMORY_AHEAD_OF_TIME]"
 #endif
 		<< '\n';
 	std::cout << "Average: " << my_profile.mean << '\n';
