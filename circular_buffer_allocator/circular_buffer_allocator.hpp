@@ -169,7 +169,7 @@ namespace zachariahs_world
 
 				const auto space_left = reinterpret_cast<std::size_t> ( end ) - reinterpret_cast<std::size_t> ( data_pointer );
 
-				return space_left < size;
+				return space_left >= size;
 			}
 		};
 
