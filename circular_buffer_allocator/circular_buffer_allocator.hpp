@@ -28,54 +28,57 @@ namespace zachariahs_world
 
 				std::lock_guard guard { my_mutex };
 
-				// If we are full
-				if ( unoccupied_begin == unoccupied_end )
+				const auto [ metadata_pointer, data_pointer ] = [ size, alignment ]
 				{
-					throw std::bad_alloc { };
-				}
+					// If we are full
+					if ( unoccupied_begin == unoccupied_end )
+					{
+						throw std::bad_alloc { };
+					}
 
-				// If the end is behind us, use end of buffer.
-				if ( unoccupied_end < unoccupied_begin )
-				{
+					// If the end is behind us, use end of buffer.
+					if ( unoccupied_end < unoccupied_begin )
 					{
 						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( unoccupied_begin, alignment );
 
 						if ( data_in_bounds ( data_pointer, size, &buffer [ buffer_size ] ) )
 						{
-							back_allocation = new ( metadata_pointer ) allocation_metadata_type { back_allocation };
-							return data_pointer;
+							return std::tuple { metadata_pointer, data_pointer };
+						}
+						// If no enough memory, go back to the beginning of the buffer.
+						else
+						{
+							// If there is no space at the beginning of the buffer.
+							if ( unoccupied_end == nullptr )
+							{
+								throw std::bad_alloc { };
+							}
+
+							const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( &buffer [ 0 ], alignment );
+
+							if ( !data_in_bounds ( data_pointer, size, unoccupied_end ) )
+							{
+								throw std::bad_alloc { };
+							}
+
+							return std::tuple { metadata_pointer, data_pointer };
 						}
 					}
-
-					// Otherwise, go back to the beginning of the buffer.
+					else
 					{
-						// If there is no space at the beginning of the buffer.
-						if ( unoccupied_end == nullptr )
-						{
-							throw std::bad_alloc { };
-						}
-
-						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( &buffer [ 0 ], alignment );
+						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( unoccupied_begin, alignment );
 
 						if ( !data_in_bounds ( data_pointer, size, unoccupied_end ) )
 						{
 							throw std::bad_alloc { };
 						}
 
-						back_allocation = new ( metadata_pointer ) allocation_metadata_type { back_allocation };
-						unoccupied_begin = &buffer [ 0 ];
-						return data_pointer;
+						return std::tuple { metadata_pointer, data_pointer };
 					}
-				}
-
-				const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( unoccupied_begin, alignment );
-
-				if ( !data_in_bounds ( data_pointer, size, unoccupied_end ) )
-				{
-					throw std::bad_alloc { };
-				}
+				} ( );
 
 				back_allocation = new ( metadata_pointer ) allocation_metadata_type { back_allocation };
+				unoccupied_begin = data_pointer + size;
 				return data_pointer;
 			}
 
