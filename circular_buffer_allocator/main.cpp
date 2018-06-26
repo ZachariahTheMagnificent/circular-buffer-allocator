@@ -6,6 +6,35 @@
 
 using zachariahs_world::custom_allocators::circular_buffer_allocator_type;
 
+inline auto allocator1 = circular_buffer_allocator_type<char> { };
+inline auto allocator2 = circular_buffer_allocator_type<int> { };
+inline auto allocator3 = circular_buffer_allocator_type<float> { };
+constexpr auto test1 = allocator1 != allocator2;
+constexpr auto test3 = allocator2 != allocator1;
+constexpr auto test2 = allocator2 != allocator3;
+constexpr auto test4 = allocator1 == allocator2;
+constexpr auto test5 = allocator2 == allocator1;
+constexpr auto test6 = allocator2 == allocator3;
+constexpr auto test7 = decltype ( allocator2 ) { allocator1 };
+constexpr auto test8 = decltype ( allocator1 ) { allocator2 };
+constexpr auto test9 = decltype ( allocator2 ) { allocator3 };
+constexpr auto test10 = decltype ( allocator2 ) { std::move ( allocator1 ) };
+constexpr auto test11 = decltype ( allocator1 ) { std::move ( allocator2 ) };
+constexpr auto test12 = decltype ( allocator2 ) { std::move ( allocator3 ) };
+constexpr auto test13 = allocator1.alignment;
+constexpr auto test14 = allocator2.alignment;
+constexpr auto test15 = allocator3.alignment;
+constexpr auto test16 = [ ]
+{
+	allocator1 = allocator2;
+	allocator2 = allocator1;
+	allocator3 = allocator2;
+	allocator1 = std::move ( allocator2 );
+	allocator2 = std::move ( allocator1 );
+	allocator3 = std::move ( allocator2 );
+	return 0;
+} ( );
+
 template<typename type>
 #if defined USE_CUSTOM_ALLOCATOR
 using array_type = std::vector<type, circular_buffer_allocator_type<type>>;
