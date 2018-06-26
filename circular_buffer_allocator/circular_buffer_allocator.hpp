@@ -227,9 +227,9 @@ namespace zachariahs_world
 			}
 		};
 
-		auto allocator1 = circular_buffer_allocator_type<char> { };
-		auto allocator2 = circular_buffer_allocator_type<int> { };
-		auto allocator3 = circular_buffer_allocator_type<float> { };
+		inline auto allocator1 = circular_buffer_allocator_type<char> { };
+		inline auto allocator2 = circular_buffer_allocator_type<int> { };
+		inline auto allocator3 = circular_buffer_allocator_type<float> { };
 		constexpr auto test1 = allocator1 != allocator2;
 		constexpr auto test3 = allocator2 != allocator1;
 		constexpr auto test2 = allocator2 != allocator3;
