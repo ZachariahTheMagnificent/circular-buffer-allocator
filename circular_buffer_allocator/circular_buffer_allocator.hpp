@@ -220,13 +220,13 @@ namespace zachariahs_world
 				return false;
 			}
 
-			static type* allocate ( const std::size_t size )
+			static value_type* allocate ( const std::size_t size )
 			{
-				return reinterpret_cast<type*> ( global_circular_buffer_allocator::allocate ( size, alignment ) );
+				return reinterpret_cast<value_type*> ( global_circular_buffer_allocator::allocate ( size * sizeof ( value_type ), alignment ) );
 			}
-			static void deallocate ( type*const allocation_to_deallocate, const std::size_t size ) noexcept
+			static void deallocate ( value_type*const allocation_to_deallocate, const std::size_t size ) noexcept
 			{
-				global_circular_buffer_allocator::deallocate ( reinterpret_cast<char*> ( allocation_to_deallocate ), size, alignment );
+				global_circular_buffer_allocator::deallocate ( reinterpret_cast<char*> ( allocation_to_deallocate ), size * sizeof ( value_type ), alignment );
 			}
 		};
 
