@@ -1,9 +1,10 @@
 #include <iostream>
 #include <vector>
 #include "profiler.hpp"
-#include "circular_buffer_allocator.hpp"
 #define USE_CUSTOM_ALLOCATOR
 
+#if defined USE_CUSTOM_ALLOCATOR
+#include "circular_buffer_allocator.hpp"
 using zachariahs_world::custom_allocators::circular_buffer_allocator_type;
 
 inline auto allocator1 = circular_buffer_allocator_type<char> { };
@@ -34,12 +35,14 @@ constexpr auto test16 = [ ]
 	allocator3 = std::move ( allocator2 );
 	return 0;
 } ( );
+#endif
 
 template<typename type>
+using array_type =
 #if defined USE_CUSTOM_ALLOCATOR
-using array_type = std::vector<type, circular_buffer_allocator_type<type>>;
+std::vector<type, circular_buffer_allocator_type<type>>;
 #else
-using array_type = std::vector<type>;
+std::vector<type>;
 #endif
 
 int main ( )
