@@ -7,7 +7,7 @@ namespace zachariahs_world
 {
 	namespace custom_allocators
 	{
-		class global_circular_buffer_allocator
+		inline class
 		{
 		public:
 			struct alignas ( std::max_align_t ) allocation_metadata_type
@@ -25,13 +25,13 @@ namespace zachariahs_world
 				}
 			};
 
-			static char* allocate ( const std::size_t size, const std::size_t alignment )
+			char* allocate ( const std::size_t size, const std::size_t alignment )
 			{
 				assert ( alignment >= alignof ( std::max_align_t ) );
 
 				std::lock_guard guard { my_mutex };
 
-				const auto [ metadata_pointer, data_pointer ] = [ size, alignment ]
+				const auto [ metadata_pointer, data_pointer ] = [ unoccupied_begin = unoccupied_begin, unoccupied_end = unoccupied_end, buffer_begin = &buffer [ 0 ], buffer_end = &buffer [ buffer_size ], size, alignment ]
 				{
 					// If we are full
 					if ( unoccupied_begin == unoccupied_end )
@@ -44,7 +44,7 @@ namespace zachariahs_world
 					{
 						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( unoccupied_begin, alignment );
 
-						if ( data_in_bounds ( data_pointer, size, &buffer [ buffer_size ] ) )
+						if ( data_in_bounds ( data_pointer, size, buffer_end ) )
 						{
 							return std::tuple { metadata_pointer, data_pointer };
 						}
@@ -57,7 +57,7 @@ namespace zachariahs_world
 								throw std::bad_alloc { };
 							}
 
-							const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( &buffer [ 0 ], alignment );
+							const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( buffer_begin, alignment );
 
 							if ( !data_in_bounds ( data_pointer, size, unoccupied_end ) )
 							{
@@ -85,7 +85,7 @@ namespace zachariahs_world
 				return data_pointer;
 			}
 
-			static void deallocate ( char*const allocation_to_deallocate, const std::size_t size, const std::size_t alignment ) noexcept
+			void deallocate ( char*const allocation_to_deallocate, const std::size_t size, const std::size_t alignment ) noexcept
 			{
 				assert ( alignment >= alignof ( std::max_align_t ) );
 				
@@ -138,12 +138,6 @@ namespace zachariahs_world
 		private:
 			static constexpr auto buffer_size = 8 * 1024 * 1024;
 
-			static std::mutex my_mutex;
-			static std::unique_ptr<char [ ]> buffer;
-			static char* unoccupied_begin;
-			static char* unoccupied_end;
-			static allocation_metadata_type* back_allocation;
-
 			static constexpr char* align_pointer_by_increment ( char*const pointer, const std::size_t alignment ) noexcept
 			{
 				const auto pointer_as_integer = reinterpret_cast<std::size_t> ( pointer );
@@ -177,7 +171,13 @@ namespace zachariahs_world
 
 				return space_left >= size;
 			}
-		};
+
+			std::mutex my_mutex;
+			std::unique_ptr<char [ ]> buffer = std::make_unique<char [ ]> ( buffer_size );
+			char* unoccupied_begin = &buffer [ 0 ];
+			char* unoccupied_end = nullptr;
+			allocation_metadata_type* back_allocation = nullptr;
+		} global_circular_buffer_allocator;
 
 		template<typename type>
 		class circular_buffer_allocator_type
@@ -225,11 +225,11 @@ namespace zachariahs_world
 
 			static value_type* allocate ( const std::size_t size )
 			{
-				return reinterpret_cast<value_type*> ( global_circular_buffer_allocator::allocate ( size * sizeof ( value_type ), alignment ) );
+				return reinterpret_cast<value_type*> ( global_circular_buffer_allocator.allocate ( size * sizeof ( value_type ), alignment ) );
 			}
 			static void deallocate ( value_type*const allocation_to_deallocate, const std::size_t size ) noexcept
 			{
-				global_circular_buffer_allocator::deallocate ( reinterpret_cast<char*> ( allocation_to_deallocate ), size * sizeof ( value_type ), alignment );
+				global_circular_buffer_allocator.deallocate ( reinterpret_cast<char*> ( allocation_to_deallocate ), size * sizeof ( value_type ), alignment );
 			}
 		};
 
