@@ -132,11 +132,11 @@ namespace zachariahs_world
 		private:
 			static constexpr auto buffer_size = 8 * 1024 * 1024;
 
-			static inline std::mutex my_mutex;
-			static inline std::unique_ptr<char [ ]> buffer = std::make_unique<char [ ]> ( buffer_size );
-			static inline char* unoccupied_begin = &buffer [ 0 ];
-			static inline char* unoccupied_end = nullptr;
-			static inline allocation_metadata_type* back_allocation = nullptr;
+			static std::mutex my_mutex;
+			static std::unique_ptr<char [ ]> buffer;
+			static char* unoccupied_begin;
+			static char* unoccupied_end;
+			static allocation_metadata_type* back_allocation;
 
 			static constexpr char* align_pointer_by_increment ( char*const pointer, const std::size_t alignment ) noexcept
 			{
