@@ -136,7 +136,7 @@ namespace zachariahs_world
 			}
 
 		private:
-			static constexpr auto buffer_size = 8 * 1024 * 1024;
+			static constexpr auto buffer_size = 1024 * 1024 * 1024;
 
 			static constexpr char* align_pointer_by_increment ( char*const pointer, const std::size_t alignment ) noexcept
 			{
