@@ -19,7 +19,7 @@ int main ( )
 	constexpr auto num_ints = 10'000;
 	constexpr auto num_frames = 1000;
 
-	profiler my_profiler;
+	auto my_profiler = profiler_type { };
 
 	std::cout << "Circular Buffer Allocator benchmark test\n";
 	std::system ( "pause" );

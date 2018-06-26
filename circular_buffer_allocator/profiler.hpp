@@ -4,7 +4,7 @@
 #include <numeric>
 #include <chrono>
 
-class profiler
+class profiler_type
 {
 public:
 	using clock = std::chrono::steady_clock;
@@ -12,10 +12,10 @@ public:
 	using duration = clock::duration;
 	using num_type = duration::rep;
 
-	struct profile
+	struct profile_type
 	{
-		profile ( ) = default;
-		explicit profile ( const num_type lowest, const num_type highest, const num_type median, const num_type mean, const num_type standard_deviation ) noexcept : lowest { lowest },
+		profile_type ( ) = default;
+		explicit profile_type ( const num_type lowest, const num_type highest, const num_type median, const num_type mean, const num_type standard_deviation ) noexcept : lowest { lowest },
 			highest { highest },
 			median { median },
 			mean { mean },
@@ -31,7 +31,7 @@ public:
 		num_type standard_deviation = num_type { };
 	};
 
-	profiler ( ) = default;
+	profiler_type ( ) = default;
 
 	void start ( )
 	{
@@ -46,7 +46,7 @@ public:
 		last_time_point_ = curr_time_point;
 	}
 
-	profile flush ( )
+	profile_type flush ( )
 	{
 		std::sort ( data_points_.begin ( ), data_points_.end ( ) );
 
