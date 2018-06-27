@@ -90,8 +90,10 @@ namespace zachariahs_world
 			void deallocate ( char*const allocation_to_deallocate, const std::size_t size ) noexcept
 			{
 				static_assert ( alignment >= alignof ( std::max_align_t ), "The Circular Buffer Allocator only takes alignments bigger or equal to the alignment of std::max_align_t!" );
-				
-				const auto pointer_to_allocation_metadata = align_pointer_by_decrement<alignment> ( allocation_to_deallocate - sizeof ( allocation_metadata_type ) );
+
+				constexpr auto metadata_occupied_space = ( ( sizeof ( allocation_metadata_type ) + alignment - 1 ) / alignment ) * alignment;
+
+				const auto pointer_to_allocation_metadata = allocation_to_deallocate - metadata_occupied_space;
 
 				std::lock_guard guard { my_mutex };
 
@@ -160,10 +162,10 @@ namespace zachariahs_world
 			template<std::size_t alignment>
 			static constexpr auto get_pointers_for_allocation ( char*const begin ) noexcept -> decltype ( std::tuple { begin, begin } )
 			{
-				constexpr auto metadata_size = alignment > sizeof ( allocation_metadata_type ) ? alignment : sizeof ( allocation_metadata_type );
+				constexpr auto metadata_occupied_space = ( ( sizeof ( allocation_metadata_type ) + alignment - 1 ) / alignment ) * alignment;
 
 				const auto metadata_pointer = align_pointer_by_increment<alignment> ( begin );
-				const auto data_pointer = metadata_pointer + metadata_size;
+				const auto data_pointer = metadata_pointer + metadata_occupied_space;
 
 				return std::tuple { metadata_pointer, data_pointer };
 			}
