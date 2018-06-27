@@ -135,8 +135,8 @@ array_type<type> quick_sort ( const array_type<type>& array )
 int main ( )
 {
 	constexpr auto num_tests = 1000;
-	constexpr auto num_ints = 10'000;
-	constexpr auto num_frames = 1000;
+	constexpr auto num_ints = 1000;
+	constexpr auto num_frames = 100;
 	constexpr auto lowest_int = int { 12 };
 	constexpr auto highest_int = int { 758 };
 
@@ -171,15 +171,17 @@ int main ( )
 		}
 	};
 
-	// Warmup
-	test ( );
-
 	for ( auto i = std::size_t { }; i < num_tests; ++i )
 	{
+		// Warmup
+		test ( );
+
 		// Beginning of profile
 		my_profiler.start ( );
 		test ( );
 		my_profiler.end ( );
+
+		std::cout << "Test " << i << '/' << num_tests << " done!\n";
 	}
 
 	const auto my_profile = my_profiler.flush ( );
