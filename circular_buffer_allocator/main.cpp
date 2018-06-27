@@ -1,8 +1,9 @@
 #include <iostream>
 #include <vector>
+#include <random>
 #include "profiler.hpp"
-#define USE_CUSTOM_ALLOCATOR
-#define RESERVE_MEMORY_AHEAD_OF_TIME
+//#define USE_CUSTOM_ALLOCATOR
+//#define RESERVE_MEMORY_AHEAD_OF_TIME
 
 #if defined USE_CUSTOM_ALLOCATOR
 #include "circular_buffer_allocator.hpp"
@@ -46,11 +47,98 @@ std::vector<type, circular_buffer_allocator_type<type>>;
 std::vector<type>;
 #endif
 
+template<typename type>
+array_type<type> operator+ ( const array_type<type>& lower, const array_type<type>& upper )
+{
+	array_type<type> combined;
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+	combined.reserve ( lower.size ( ) + upper.size ( ) );
+#endif
+
+	for ( const auto& element : lower )
+	{
+		combined.push_back ( element );
+	}
+	for ( const auto& element : upper )
+	{
+		combined.push_back ( element );
+	}
+
+	return combined;
+}
+
+template<typename type>
+array_type<type> operator+ ( const array_type<type>& array, const type& back )
+{
+	array_type<type> combined;
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+	combined.reserve ( array.size ( ) + 1 );
+#endif
+
+	for ( const auto& element : array )
+	{
+		combined.push_back ( element );
+	}
+
+	combined.push_back ( back );
+
+	return combined;
+}
+template<typename type>
+array_type<type> operator+ ( const type& front, const array_type<type>& array )
+{
+	array_type<type> combined;
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+	combined.reserve ( array.size ( ) + 1 );
+#endif
+
+	combined.push_back ( front );
+
+	for ( const auto& element : array )
+	{
+		combined.push_back ( element );
+	}
+}
+
+template<typename type>
+array_type<type> quick_sort ( const array_type<type>& array )
+{
+	if ( array.size ( ) < 2 )
+	{
+		return array;
+	}
+
+	array_type<type> lower;
+	array_type<type> upper;
+	const type middle = array.front ( );
+
+#if defined RESERVE_MEMORY_AHEAD_OF_TIME
+	lower.reserve ( array.size ( ) );
+	upper.reserve ( array.size ( ) );
+#endif
+
+	for ( auto i = std::size_t { } + 1, size = array.size ( ); i < size; ++i )
+	{
+		if ( array [ i ] < middle )
+		{
+			lower.push_back ( array [ i ] );
+		}
+		else
+		{
+			upper.push_back ( array [ i ] );
+		}
+	}
+
+	return quick_sort ( lower ) + middle + quick_sort ( upper );
+}
+
 int main ( )
 {
 	constexpr auto num_tests = 1000;
 	constexpr auto num_ints = 10'000;
 	constexpr auto num_frames = 1000;
+	constexpr auto lowest_int = int { 12 };
+	constexpr auto highest_int = int { 758 };
 
 	auto my_profiler = profiler_type { };
 
@@ -58,33 +146,27 @@ int main ( )
 	std::system ( "pause" );
 	std::cout << '\n';
 
-	auto test = [ num_ints, num_frames ]
+	auto test = [ lowest_int, highest_int, num_ints, num_frames ]
 	{
+		auto rng_machine = std::mt19937 { };
+		auto int_generator = std::uniform_int_distribution<int> { lowest_int, highest_int };
 		auto ints = array_type<int> { };
-#if defined RESERVE_MEMORY_AHEAD_OF_TIME
-		ints.reserve ( num_ints );
-#endif
-
-		for ( auto i = int { }; i < num_ints; ++i )
-		{
-			ints.push_back ( i );
-		}
 
 		for ( auto i = std::size_t { }; i < num_frames; ++i )
 		{
-			ints = [ &ints, num_ints ]
+			ints = [ &rng_machine, &int_generator, &ints, num_ints ]
 			{
-				auto results = array_type<int> { };
+				auto random_ints = array_type<int> { };
 #if defined RESERVE_MEMORY_AHEAD_OF_TIME
-				results.reserve ( num_ints );
+				random_ints.reserve ( num_ints );
 #endif
 
-				for ( const auto integer : ints )
+				for ( auto i = std::size_t { }; i < num_ints; ++i )
 				{
-					results.push_back ( integer + 1 );
+					random_ints.push_back ( int_generator ( rng_machine ) );
 				}
 
-				return results;
+				return quick_sort ( random_ints );
 			} ( );
 		}
 	};
