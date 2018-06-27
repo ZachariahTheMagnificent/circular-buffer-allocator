@@ -2,7 +2,7 @@
 #include <vector>
 #include <random>
 #include "profiler.hpp"
-//#define USE_CUSTOM_ALLOCATOR
+#define USE_CUSTOM_ALLOCATOR
 //#define RESERVE_MEMORY_AHEAD_OF_TIME
 
 #if defined USE_CUSTOM_ALLOCATOR

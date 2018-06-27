@@ -1,7 +1,7 @@
 #pragma once
+#include <tuple>
 #include <memory>
 #include <mutex>
-#include <cassert>
 
 namespace zachariahs_world
 {
@@ -24,14 +24,15 @@ namespace zachariahs_world
 					}
 				}
 			};
-
-			char* allocate ( const std::size_t size, const std::size_t alignment )
+			
+			template<std::size_t alignment>
+			char* allocate ( const std::size_t size )
 			{
-				assert ( alignment >= alignof ( std::max_align_t ) );
+				static_assert ( alignment >= alignof ( std::max_align_t ), "The Circular Buffer Allocator only takes alignments bigger or equal to the alignment of std::max_align_t!" );
 
 				std::lock_guard guard { my_mutex };
 
-				const auto [ metadata_pointer, data_pointer ] = [ unoccupied_begin = unoccupied_begin, unoccupied_end = unoccupied_end, buffer_begin = &buffer [ 0 ], buffer_end = &buffer [ buffer_size ], size, alignment ]
+				const auto [ metadata_pointer, data_pointer ] = [ unoccupied_begin = unoccupied_begin, unoccupied_end = unoccupied_end, buffer_begin = &buffer [ 0 ], buffer_end = &buffer [ buffer_size ], size ]
 				{
 					// If we are full
 					if ( unoccupied_begin == unoccupied_end )
@@ -42,7 +43,7 @@ namespace zachariahs_world
 					// If the end is behind us, use end of buffer.
 					if ( unoccupied_end < unoccupied_begin )
 					{
-						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( unoccupied_begin, alignment );
+						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation<alignment> ( unoccupied_begin );
 
 						if ( data_in_bounds ( data_pointer, size, buffer_end ) )
 						{
@@ -57,7 +58,7 @@ namespace zachariahs_world
 								throw std::bad_alloc { };
 							}
 
-							const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( buffer_begin, alignment );
+							const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation<alignment> ( buffer_begin );
 
 							if ( !data_in_bounds ( data_pointer, size, unoccupied_end ) )
 							{
@@ -69,7 +70,7 @@ namespace zachariahs_world
 					}
 					else
 					{
-						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation ( unoccupied_begin, alignment );
+						const auto [ metadata_pointer, data_pointer ] = get_pointers_for_allocation<alignment> ( unoccupied_begin );
 
 						if ( !data_in_bounds ( data_pointer, size, unoccupied_end ) )
 						{
@@ -85,11 +86,12 @@ namespace zachariahs_world
 				return data_pointer;
 			}
 
-			void deallocate ( char*const allocation_to_deallocate, const std::size_t size, const std::size_t alignment ) noexcept
+			template<std::size_t alignment>
+			void deallocate ( char*const allocation_to_deallocate, const std::size_t size ) noexcept
 			{
-				assert ( alignment >= alignof ( std::max_align_t ) );
+				static_assert ( alignment >= alignof ( std::max_align_t ), "The Circular Buffer Allocator only takes alignments bigger or equal to the alignment of std::max_align_t!" );
 				
-				const auto pointer_to_allocation_metadata = align_pointer_by_decrement ( allocation_to_deallocate - sizeof ( allocation_metadata_type ), alignment );
+				const auto pointer_to_allocation_metadata = align_pointer_by_decrement<alignment> ( allocation_to_deallocate - sizeof ( allocation_metadata_type ) );
 
 				std::lock_guard guard { my_mutex };
 
@@ -138,14 +140,16 @@ namespace zachariahs_world
 		private:
 			static constexpr auto buffer_size = 1024 * 1024 * 1024;
 
-			static constexpr char* align_pointer_by_increment ( char*const pointer, const std::size_t alignment ) noexcept
+			template<std::size_t alignment>
+			static constexpr char* align_pointer_by_increment ( char*const pointer ) noexcept
 			{
 				const auto pointer_as_integer = reinterpret_cast<std::size_t> ( pointer );
 				const auto aligned_pointer_as_integer = ( ( pointer_as_integer + alignment - 1 ) / alignment ) * alignment;
 
 				return reinterpret_cast<char*> ( aligned_pointer_as_integer );
 			}
-			static constexpr char* align_pointer_by_decrement ( char*const pointer, const std::size_t alignment ) noexcept
+			template<std::size_t alignment>
+			static constexpr char* align_pointer_by_decrement ( char*const pointer ) noexcept
 			{
 				const auto pointer_as_integer = reinterpret_cast<std::size_t> ( pointer );
 				const auto aligned_pointer_as_integer = ( pointer_as_integer / alignment ) * alignment;
@@ -153,10 +157,13 @@ namespace zachariahs_world
 				return reinterpret_cast<char*> ( aligned_pointer_as_integer );
 			}
 
-			static constexpr auto get_pointers_for_allocation ( char*const begin, std::size_t alignment ) noexcept -> decltype ( std::tuple { begin, begin } )
+			template<std::size_t alignment>
+			static constexpr auto get_pointers_for_allocation ( char*const begin ) noexcept -> decltype ( std::tuple { begin, begin } )
 			{
-				const auto metadata_pointer = align_pointer_by_increment ( begin, alignment );
-				const auto data_pointer = align_pointer_by_increment ( metadata_pointer + sizeof ( allocation_metadata_type ), alignment );
+				constexpr auto metadata_size = alignment > sizeof ( allocation_metadata_type ) ? alignment : sizeof ( allocation_metadata_type );
+
+				const auto metadata_pointer = align_pointer_by_increment<alignment> ( begin );
+				const auto data_pointer = metadata_pointer + metadata_size;
 
 				return std::tuple { metadata_pointer, data_pointer };
 			}
@@ -225,11 +232,11 @@ namespace zachariahs_world
 
 			static value_type* allocate ( const std::size_t size )
 			{
-				return reinterpret_cast<value_type*> ( global_circular_buffer_allocator.allocate ( size * sizeof ( value_type ), alignment ) );
+				return reinterpret_cast<value_type*> ( global_circular_buffer_allocator.allocate<alignment> ( size * sizeof ( value_type ) ) );
 			}
 			static void deallocate ( value_type*const allocation_to_deallocate, const std::size_t size ) noexcept
 			{
-				global_circular_buffer_allocator.deallocate ( reinterpret_cast<char*> ( allocation_to_deallocate ), size * sizeof ( value_type ), alignment );
+				global_circular_buffer_allocator.deallocate<alignment> ( reinterpret_cast<char*> ( allocation_to_deallocate ), size * sizeof ( value_type ) );
 			}
 		};
 	}
